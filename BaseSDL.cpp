@@ -75,14 +75,17 @@ void MyApp::Run()
 		DrawFromBuffer();
 		//Draw();
 
-
 		float FPS = 1000.f / mFpsTimer.getTicks();
-		
 		std::string newTitle = mTitle + ": " + std::to_string(FPS);
 		SDL_SetWindowTitle(mWindow, newTitle.c_str());
 	}
 }
 
+
+/*
+Draws pixels directly into renderer
+even less eficient
+*/
 void MyApp::Draw()
 {
 	SDL_SetRenderDrawColor(mRenderer, 0, 0, 0, 255);
@@ -155,12 +158,10 @@ void MyApp::DrawFromBuffer()
 void MyApp::PollEvents()
 {
 	while (SDL_PollEvent(&e) != 0) {
-
 		switch (e.type)
 		{
-
 		case SDL_MOUSEBUTTONDOWN:
-			HandleMousseButtonClick(e);
+			HandleMouseButtonClick(e);
 			break;
 
 		case SDL_QUIT:
@@ -170,7 +171,7 @@ void MyApp::PollEvents()
 	}
 }
 
-void MyApp::HandleMousseButtonClick(SDL_Event e)
+void MyApp::HandleMouseButtonClick(SDL_Event e)
 {
 	int minDistInd = INT_MAX;
 	int minDist = INT_MAX;
@@ -198,6 +199,5 @@ void MyApp::HandleMousseButtonClick(SDL_Event e)
 		
 		break;
 	}
-
 }
 

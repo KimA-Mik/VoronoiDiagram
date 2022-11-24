@@ -7,9 +7,8 @@
 #include "Util.h"
 #include "LTimer.h"
 
-constexpr int POINT_SIZE = 10;
-constexpr int INITIAL_POINT_COUNT = 10;
-//мое приложение
+constexpr int POINT_SIZE = 9;
+constexpr int INITIAL_POINT_COUNT = 9;
 class MyApp
 {
 public:
@@ -19,12 +18,11 @@ public:
 
 
 private:
-
 	void Draw();
 	void UpdateBuffer();
 	void DrawFromBuffer();
 	void PollEvents();
-	void HandleMousseButtonClick(SDL_Event e);
+	void HandleMouseButtonClick(SDL_Event e);
 
 	bool IsRunning = true;
 	std::string mTitle;
@@ -44,6 +42,5 @@ private:
 	
 	std::vector<Point> mPoints;
 	std::vector<RGBA> mPointsRGBA;
-	
 };
 
