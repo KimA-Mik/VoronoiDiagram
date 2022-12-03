@@ -24,6 +24,8 @@ private:
 	void DrawFromBuffer();
 	void PollEvents();
 	void HandleMouseButtonClick(SDL_Event e);
+	void HandleKeyboardInput(SDL_Event e);
+	void HandleMouseMoution(SDL_Event e);
 
 	bool IsRunning = true;
 	std::string mTitle;
@@ -40,8 +42,16 @@ private:
 	int mScreenWidth;
 	int mScreenHeight;
 	int mBlockSize;
-	
+
+	//App logic
+	int GetPointFromCoords(int x, int y);
+	void AddPointWithRandomColor(int x, int y);
+	void ErasePoint(int index);
+
 	std::vector<Point> mPoints;
 	std::vector<RGBA> mPointsRGBA;
+
+	bool mMovePoint = false;
+	int mSelectedPoint = -1;
 };
 

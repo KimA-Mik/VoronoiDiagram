@@ -6,7 +6,7 @@ MyApp::MyApp(std::string windowName, int width, int height)
 	mScreenWidth = width;
 	mScreenHeight = height;
 	mTitle = windowName;
-	
+
 	if (SDL_Init(SDL_INIT_VIDEO) < 0) {
 		printf("SDL could not initialize! SDL Error: %s\n", SDL_GetError());
 		IsRunning = false;
@@ -21,8 +21,8 @@ MyApp::MyApp(std::string windowName, int width, int height)
 			IsRunning = false;
 		}
 		else {
-			
-			
+
+
 			mRenderer = SDL_CreateRenderer(mWindow, -1, SDL_RENDERER_ACCELERATED);
 			if (mRenderer == nullptr)
 			{
@@ -39,7 +39,7 @@ MyApp::~MyApp()
 	SDL_DestroyTexture(mBuffer);
 	SDL_DestroyRenderer(mRenderer);
 	SDL_DestroyWindow(mWindow);
-	
+
 	SDL_Quit();
 }
 
@@ -52,13 +52,8 @@ void MyApp::Run()
 
 
 	for (int i = 0; i < INITIAL_POINT_COUNT; i++) {
-		mPoints.push_back(Point(rand() % mScreenWidth,
-			rand() % mScreenHeight));
-		mPointsRGBA.push_back(RGBA(rand() % 256, 
-			rand() % 256, 
-			rand() % 256, 
-			255));
-	}	
+		AddPointWithRandomColor(rand() % mScreenWidth, rand() % mScreenHeight);
+	}
 
 	mBuffer = SDL_CreateTexture(mRenderer,
 		SDL_PIXELFORMAT_RGBA8888,
@@ -66,8 +61,8 @@ void MyApp::Run()
 		mScreenWidth,
 		mScreenHeight);
 
-	
-	while(IsRunning) {
+
+	while (IsRunning) {
 		mFpsTimer.start();
 
 		PollEvents();
@@ -125,21 +120,22 @@ void MyApp::UpdateBuffer()
 
 	for (int y = 0; y < mScreenHeight; y++) {
 		for (int x = 0; x < mScreenWidth; x++) {
+			if (render)
+			{
+				int minDistInd = INT_MAX;
+				int minDist = INT_MAX;
 
-			int minDistInd = INT_MAX;
-			int minDist = INT_MAX;
+				for (int i = 0; i < mPoints.size(); i++) {
+					auto& point = mPoints[i];
+					int dist = get_distance_sqr(x, y, point.x, point.y);
 
-			for (int i = 0; i < mPoints.size(); i++) {
-				auto &point = mPoints[i];
-				double dist = get_distance_sqr(x, y, point.x, point.y);
-
-				if (dist < minDist) {
-					minDist = dist;
-					minDistInd = i;
+					if (dist < minDist) {
+						minDist = dist;
+						minDistInd = i;
+					}
 				}
+				put_pixel_on_surface(mSurfaceBuffer, x, y, mPointsRGBA[minDistInd]);
 			}
-			put_pixel_on_surface(mSurfaceBuffer, x, y, mPointsRGBA[minDistInd]);
-		}
 			else
 			{
 				put_pixel_on_surface(mSurfaceBuffer, x, y, DEFAULT_BACKGROUND_COLOR);
@@ -166,8 +162,17 @@ void MyApp::PollEvents()
 	while (SDL_PollEvent(&e) != 0) {
 		switch (e.type)
 		{
+		case SDL_MOUSEMOTION:
+			HandleMouseMoution(e);
+			break;
 		case SDL_MOUSEBUTTONDOWN:
+		case SDL_MOUSEBUTTONUP:
 			HandleMouseButtonClick(e);
+			break;
+
+		case SDL_KEYUP:
+		case SDL_KEYDOWN:
+			HandleKeyboardInput(e);
 			break;
 
 		case SDL_QUIT:
@@ -177,32 +182,88 @@ void MyApp::PollEvents()
 	}
 }
 
+void MyApp::HandleKeyboardInput(SDL_Event e)
+{
+	bool pressed = (e.type == SDL_KEYDOWN);
+
+	switch (e.key.keysym.sym) {
+	case SDLK_LSHIFT:
+	case SDLK_SPACE:
+		mMovePoint = pressed;
+		break;
+	}
+}
+
+void MyApp::HandleMouseMoution(SDL_Event e)
+{
+	if (mMovePoint && mSelectedPoint > -1) {
+		int x = e.motion.x;
+		int y = e.motion.y;
+
+		mPoints[mSelectedPoint].x = x;
+		mPoints[mSelectedPoint].y = y;
+	}
+
+
+}
+
+int MyApp::GetPointFromCoords(int x, int y)
+{
+	int ind = -1;
+	for (int i = 0; i < mPoints.size(); i++) {
+		int dist = get_distance_sqr(x, y, mPoints[i].x, mPoints[i].y);
+
+		if ((dist < POINT_SIZE * POINT_SIZE)) {
+			ind = i;
+		}
+	}
+	return ind;
+}
+
+void MyApp::AddPointWithRandomColor(int x, int y)
+{
+	mPoints.push_back(Point(x, y));
+	mPointsRGBA.push_back(RGBA(rand() % 256, rand() % 256, rand() % 256, 255));
+}
+
+void MyApp::ErasePoint(int index)
+{
+	mPoints.erase(mPoints.begin() + index);
+	mPointsRGBA.erase(mPointsRGBA.begin() + index);
+}
+
+//TODO: split this cringe case
 void MyApp::HandleMouseButtonClick(SDL_Event e)
 {
 	int minDistInd = INT_MAX;
-	int minDist = INT_MAX;
-	switch (e.button.button)
+	switch (e.type)
 	{
-	case SDL_BUTTON_LEFT:
-		for (int i = 0; i < mPoints.size(); i++) {
-			double dist = get_distance_sqr(e.button.x, e.button.y, mPoints[i].x, mPoints[i].y);
-
-			if (dist < minDist) {
-				minDist = dist;
-				minDistInd = i;
-			}
-		}
-
-		if (minDist < POINT_SIZE * POINT_SIZE) {
-			mPoints.erase(mPoints.begin() + minDistInd);
-			mPointsRGBA.erase(mPointsRGBA.begin() + minDistInd);
-		}
-		else
+	case SDL_MOUSEBUTTONDOWN:
+		switch (e.button.button)
 		{
-			mPoints.push_back(Point(e.button.x, e.button.y));
-			mPointsRGBA.push_back(RGBA(rand() % 256, rand() % 256, rand() % 256, 255));
+		case SDL_BUTTON_LEFT:
+			minDistInd = GetPointFromCoords(e.button.x, e.button.y);
+
+			if (minDistInd > -1) {
+				if (mMovePoint)
+					mSelectedPoint = minDistInd;
+				else
+					ErasePoint(minDistInd);
+			}
+			else
+			{
+				AddPointWithRandomColor(e.button.x, e.button.y);
+			}
+			break;
 		}
-		
+		break;
+	case SDL_MOUSEBUTTONUP:
+		switch (e.button.button)
+		{
+		case SDL_BUTTON_LEFT:
+			mSelectedPoint = -1;
+			break;
+		}
 		break;
 	}
 }
