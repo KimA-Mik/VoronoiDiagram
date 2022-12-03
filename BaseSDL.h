@@ -9,6 +9,7 @@
 
 constexpr int POINT_SIZE = 9;
 constexpr int INITIAL_POINT_COUNT = 9;
+const RGBA DEFAULT_BACKGROUND_COLOR = { 0x18, 0x18, 0x18, 0xFF };
 class MyApp
 {
 public:

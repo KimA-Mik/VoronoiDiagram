@@ -98,7 +98,7 @@ void MyApp::Draw()
 			int minDist = INT_MAX;
 
 			for (int i = 0; i < mPoints.size(); i++) {
-				double dist = get_distance_sqr(x, y, mPoints[i].x, mPoints[i].y);
+				int dist = get_distance_sqr(x, y, mPoints[i].x, mPoints[i].y);
 
 				if (dist < minDist) {
 					minDist = dist;
@@ -120,6 +120,7 @@ void MyApp::Draw()
 
 void MyApp::UpdateBuffer()
 {
+	bool render = mPoints.size() > 0;
 	SDL_LockTexture(mBuffer, nullptr, &mSurfaceBuffer->pixels, &mSurfaceBuffer->pitch);
 
 	for (int y = 0; y < mScreenHeight; y++) {
@@ -138,6 +139,11 @@ void MyApp::UpdateBuffer()
 				}
 			}
 			put_pixel_on_surface(mSurfaceBuffer, x, y, mPointsRGBA[minDistInd]);
+		}
+			else
+			{
+				put_pixel_on_surface(mSurfaceBuffer, x, y, DEFAULT_BACKGROUND_COLOR);
+			}
 		}
 	}
 
